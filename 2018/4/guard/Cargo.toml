@@ -1,0 +1,8 @@
+[package]
+name = "guard"
+version = "0.1.0"
+authors = ["Patrick Thomas <pt@twingz.com>"]
+edition = "2018"
+
+[dependencies]
+regex = "1.1.9"

@@ -1,0 +1,8 @@
+[package]
+name = "inventory_mgmt"
+version = "0.1.0"
+authors = ["Patrick Thomas <patrick-thomas@gmx.net>"]
+edition = "2018"
+
+[dependencies]
+levenshtein = "1.0.4"
