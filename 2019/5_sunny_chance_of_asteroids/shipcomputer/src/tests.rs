@@ -17,4 +17,14 @@ mod tests {
         let int_code_vec = collect_intcode_from_string(examplecode.to_string());
         assert_eq!(Some(99), execute_intopcode_program(int_code_vec.unwrap()));
     }
+
+    #[test]
+    fn self_ending_program_day5() {
+        let examplecode = "1002,4,3,4,33";
+        let int_code_vec = collect_intcode_from_string(examplecode.to_string());
+        //This is assert does not really matter.
+        // If the program above does not work correctly, it might reach an
+        // "unreachable" state. So it this test executes at all, it is OK.
+        assert_eq!(Some(1002), execute_intopcode_program(int_code_vec.unwrap()));
+    }
 }

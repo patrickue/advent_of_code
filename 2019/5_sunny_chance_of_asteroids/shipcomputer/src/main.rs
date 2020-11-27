@@ -141,7 +141,8 @@ fn execute_one_opcode(opcode_vec: &mut Vec<usize>, state: ComputerState) -> Opti
     //Decode command:
     //println!("Before:    {:?}", opcode_vec);
     let mut next_state = None;
-    let curr_pos = state.pc;
+    let curr_pos: usize = state.pc;
+
 
     let mut command = opcode_vec[curr_pos];
 
@@ -164,25 +165,11 @@ fn execute_one_opcode(opcode_vec: &mut Vec<usize>, state: ComputerState) -> Opti
         command = command / 10;
         pm_idx += 1;
     }
-    let operand1 = match param_mode[0] {
-        ParamMode::PositionMode => {
-            opcode_vec[opcode_vec[curr_pos + 1]]
-        },
-        ParamMode::IntermediateMode => {
-            opcode_vec[curr_pos + 1]
-        }
-    };
-    let operand2 = match param_mode[1] {
-        ParamMode::PositionMode => {
-            opcode_vec[opcode_vec[curr_pos + 2]]
-        },
-        ParamMode::IntermediateMode => {
-            opcode_vec[curr_pos + 2]
-        }
-    };
 
     match opcode {
         1 => {
+            let operand1 = get_operand(opcode_vec, curr_pos+1, param_mode[0]);
+            let operand2 = get_operand(opcode_vec, curr_pos+2, param_mode[1]);
             /*let add_pos1 = opcode_vec[curr_pos + 1];
             let add_pos2 = opcode_vec[curr_pos + 2];*/
             let res_pos = opcode_vec[curr_pos + 3];
@@ -197,6 +184,8 @@ fn execute_one_opcode(opcode_vec: &mut Vec<usize>, state: ComputerState) -> Opti
             });
         }
         2 => {
+            let operand1 = get_operand(opcode_vec, curr_pos+1, param_mode[0]);
+            let operand2 = get_operand(opcode_vec, curr_pos+2, param_mode[1]);
             /*let mul_pos1 = opcode_vec[curr_pos + 1];
             let mul_pos2 = opcode_vec[curr_pos + 2];*/
             let res_pos = opcode_vec[curr_pos + 3];
@@ -231,8 +220,22 @@ fn execute_one_opcode(opcode_vec: &mut Vec<usize>, state: ComputerState) -> Opti
             });
         }
         99 => { }
-        _ => unreachable!()
+        a => {
+            println!("Unreachable! Opcode was: {}", a);
+            unreachable!();
+        }
     }
     return next_state;
 }
 
+fn get_operand(opcode_vec: &mut Vec<usize>, param_pos: usize, param_mode: ParamMode) -> usize
+{
+    match param_mode {
+        ParamMode::PositionMode => {
+            opcode_vec[opcode_vec[param_pos]]
+        },
+        ParamMode::IntermediateMode => {
+            opcode_vec[param_pos]
+        }
+    }
+}
