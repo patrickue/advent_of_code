@@ -1,9 +1,6 @@
 use std::env;
-//use std::fs::File as File;
 use std::error;
-//use std::io::ErrorKind as ErrorKind;
 use std::ffi::OsString;
-use std::hint::unreachable_unchecked;
 
 mod tests;
 
@@ -21,11 +18,12 @@ enum ParamMode {
     IntermediateMode
 }
 
+#[derive(Debug)]
 struct ComputerState {
     //program counter
     pc: usize,
     //the one and only register
-    reg: Option<usize>
+    reg: Option<isize>
 }
 
 fn main() {
@@ -41,7 +39,7 @@ fn main() {
         Ok(intcode_str_vec) => {
             match collect_intcode_from_string(intcode_str_vec[0].to_string()) {
                 Ok(opcode_vec) => {
-                    let res = execute_modified_program(opcode_vec);
+                    let res = execute_intopcode_program(opcode_vec);
                     println!("Successfully executed the program. Result is: {:?}", res);
                 }
                 Err(text) => println!("Error occured: {}", text),
@@ -74,7 +72,7 @@ fn get_args() -> Result<String, ArgsError> {
         .map_err(|oss| ArgsError::NotUtf8(oss))
 }
 
-fn execute_modified_program(opcode_vec: Vec<usize>) -> Option<usize> {
+fn execute_modified_program(opcode_vec: Vec<isize>) -> Option<usize> {
     for noun in 0..100 {
         for verb in 0..100 {
             let mut tmp_vec = opcode_vec.clone();
@@ -89,10 +87,10 @@ fn execute_modified_program(opcode_vec: Vec<usize>) -> Option<usize> {
     None
 }
 
-fn execute_intopcode_program(mut opcode_vec: Vec<usize>) -> Option<usize> {
+fn execute_intopcode_program(mut opcode_vec: Vec<isize>) -> Option<isize> {
     let mut state_opt = Some(ComputerState {
         pc: 0,
-        reg: None
+        reg: Some(1)
     });
     loop {
         match state_opt {
@@ -117,27 +115,27 @@ fn collect_str_vec_from_file(inputname: String) -> Result<Vec<String>, Box<dyn e
     let buf = BufReader::new(fi);
 //let lines: Result<i32, _> =
 
-    let mut lines_iter = buf.lines().map(|l| l.unwrap());
+    let lines_iter = buf.lines().map(|l| l.unwrap());
     // We only expect one line:
     Ok(lines_iter.collect::<Vec<String>>())
     /*next().unwrap()
     .split(',')
-    .map(|p| p.parse::<usize>())
-    .collect::<Result<Vec<usize>, std::num::ParseIntError>>()
+    .map(|p| p.parse::<isize>())
+    .collect::<Result<Vec<isize>, std::num::ParseIntError>>()
 //Map a possible ParseIntError onto Box Error
     .map_err(|e| e.into())*/
 }
 
-fn collect_intcode_from_string(inputstring: String) -> Result<Vec<usize>, Box<dyn error::Error>> {
+fn collect_intcode_from_string(inputstring: String) -> Result<Vec<isize>, Box<dyn error::Error>> {
     inputstring
         .split(',')
-        .map(|p| p.parse::<usize>())
-        .collect::<Result<Vec<usize>, std::num::ParseIntError>>()
+        .map(|p| p.parse::<isize>())
+        .collect::<Result<Vec<isize>, std::num::ParseIntError>>()
         //Map a possible ParseIntError onto Box Error
         .map_err(|e| e.into())
 }
 
-fn execute_one_opcode(opcode_vec: &mut Vec<usize>, state: ComputerState) -> Option<ComputerState> {
+fn execute_one_opcode(opcode_vec: &mut Vec<isize>, state: ComputerState) -> Option<ComputerState> {
     //Decode command:
     //println!("Before:    {:?}", opcode_vec);
     let mut next_state = None;
@@ -176,7 +174,7 @@ fn execute_one_opcode(opcode_vec: &mut Vec<usize>, state: ComputerState) -> Opti
 
             /*let add_1 = opcode_vec[add_pos1];
             let add_2 = opcode_vec[add_pos2];*/
-            opcode_vec[res_pos] = operand1 + operand2;
+            opcode_vec[res_pos as usize] = operand1 + operand2;
             //println!("After Add: {:?}", opcode_vec);
             next_state = Some(ComputerState{
                 pc: curr_pos + 4,
@@ -192,7 +190,7 @@ fn execute_one_opcode(opcode_vec: &mut Vec<usize>, state: ComputerState) -> Opti
 
             /*let mul_1 = opcode_vec[mul_pos1];
             let mul_2 = opcode_vec[mul_pos2];*/
-            opcode_vec[res_pos] = operand1 * operand2;
+            opcode_vec[res_pos as usize] = operand1 * operand2;
             //println!("After Mul: {:?}", opcode_vec);
             next_state = Some(ComputerState{
                 pc: curr_pos + 4,
@@ -203,8 +201,8 @@ fn execute_one_opcode(opcode_vec: &mut Vec<usize>, state: ComputerState) -> Opti
             //take intermediate register and save to position
             let res_pos = opcode_vec[curr_pos + 1];
             match state.reg {
-                Some(buff_cont) => opcode_vec[res_pos] = buff_cont,
-                None => unreachable!()
+                Some(buff_cont) => opcode_vec[res_pos as usize] = buff_cont,
+                None => {println!("{}", curr_pos);unreachable!();}
             }
             next_state = Some(ComputerState{
                 pc: curr_pos + 2,
@@ -216,8 +214,9 @@ fn execute_one_opcode(opcode_vec: &mut Vec<usize>, state: ComputerState) -> Opti
             let res_pos = opcode_vec[curr_pos + 1];
             next_state = Some(ComputerState{
                 pc: curr_pos + 2,
-                reg: Some(opcode_vec[res_pos])
+                reg: Some(opcode_vec[res_pos as usize])
             });
+            println!("{:?}", next_state);
         }
         99 => { }
         a => {
@@ -228,11 +227,11 @@ fn execute_one_opcode(opcode_vec: &mut Vec<usize>, state: ComputerState) -> Opti
     return next_state;
 }
 
-fn get_operand(opcode_vec: &mut Vec<usize>, param_pos: usize, param_mode: ParamMode) -> usize
+fn get_operand(opcode_vec: &mut Vec<isize>, param_pos: usize, param_mode: ParamMode) -> isize
 {
     match param_mode {
         ParamMode::PositionMode => {
-            opcode_vec[opcode_vec[param_pos]]
+            opcode_vec[opcode_vec[param_pos] as usize]
         },
         ParamMode::IntermediateMode => {
             opcode_vec[param_pos]

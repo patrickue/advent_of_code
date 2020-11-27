@@ -27,4 +27,12 @@ mod tests {
         // "unreachable" state. So it this test executes at all, it is OK.
         assert_eq!(Some(1002), execute_intopcode_program(int_code_vec.unwrap()));
     }
+
+    #[test]
+    fn negative_number_program_day5() {
+        let examplecode = "1101,100,-1,4,0";
+        let int_code_vec = collect_intcode_from_string(examplecode.to_string());
+        //This is assert does not really matter, like previous test.
+        assert_eq!(Some(1101), execute_intopcode_program(int_code_vec.unwrap()));
+    }
 }
