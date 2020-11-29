@@ -15,7 +15,7 @@ enum ArgsError {
 #[derive(Copy, Clone)]
 enum ParamMode {
     PositionMode,
-    IntermediateMode
+    IntermediateMode,
 }
 
 #[derive(Debug)]
@@ -23,7 +23,8 @@ struct ComputerState {
     //program counter
     pc: usize,
     //the one and only register
-    reg: Option<isize>
+    reg: Option<isize>,
+    end: bool,
 }
 
 fn main() {
@@ -38,8 +39,8 @@ fn main() {
     match collect_str_vec_from_file(filename) {
         Ok(intcode_str_vec) => {
             match collect_intcode_from_string(intcode_str_vec[0].to_string()) {
-                Ok(opcode_vec) => {
-                    let res = execute_intopcode_program(opcode_vec);
+                Ok(mut opcode_vec) => {
+                    let res = execute_intopcode_program(&mut opcode_vec, Some(1));
                     println!("Successfully executed the program. Result is: {:?}", res);
                 }
                 Err(text) => println!("Error occured: {}", text),
@@ -72,34 +73,20 @@ fn get_args() -> Result<String, ArgsError> {
         .map_err(|oss| ArgsError::NotUtf8(oss))
 }
 
-fn execute_modified_program(opcode_vec: Vec<isize>) -> Option<usize> {
-    for noun in 0..100 {
-        for verb in 0..100 {
-            let mut tmp_vec = opcode_vec.clone();
-            tmp_vec[1] = noun;
-            tmp_vec[2] = verb;
-            let res = execute_intopcode_program(tmp_vec);
-            if res == Some(19690720) {
-                println!("Noun: {}, verb: {}, Res: {:?}", noun, verb, res);
-            }
-        }
-    }
-    None
-}
-
-fn execute_intopcode_program(mut opcode_vec: Vec<isize>) -> Option<isize> {
-    let mut state_opt = Some(ComputerState {
+fn execute_intopcode_program(mut opcode_vec: &mut Vec<isize>, start_val: Option<isize>) -> Option<isize> {
+    let mut state = ComputerState {
         pc: 0,
-        reg: Some(1)
-    });
+        reg: start_val,
+        end: false,
+    };
     loop {
-        match state_opt {
-            Some(state) => {
-                state_opt = execute_one_opcode(&mut opcode_vec, state);
+        match state.end {
+            false => {
+                state = execute_one_opcode(&mut opcode_vec, state);
             }
-            None => {
+            true => {
                 //we reached a 99
-                return Some(opcode_vec[0]);
+                return state.reg;
             }
         }
     }
@@ -135,17 +122,18 @@ fn collect_intcode_from_string(inputstring: String) -> Result<Vec<isize>, Box<dy
         .map_err(|e| e.into())
 }
 
-fn execute_one_opcode(opcode_vec: &mut Vec<isize>, state: ComputerState) -> Option<ComputerState> {
+/// Return next state for computer
+///
+fn execute_one_opcode(opcode_vec: &mut Vec<isize>, state: ComputerState) -> ComputerState {
     //Decode command:
     //println!("Before:    {:?}", opcode_vec);
-    let mut next_state = None;
     let curr_pos: usize = state.pc;
 
 
     let mut command = opcode_vec[curr_pos];
 
     let opcode = command % 100;
-    command = command/100;
+    command = command / 100;
 
     let mut param_mode = [ParamMode::PositionMode; 3];
 
@@ -154,8 +142,8 @@ fn execute_one_opcode(opcode_vec: &mut Vec<isize>, state: ComputerState) -> Opti
         match command % 10 {
             1 => {
                 param_mode[pm_idx] = ParamMode::IntermediateMode;
-            },
-            0 => { /*param mode is default position mode, so keep everything*/ },
+            }
+            0 => { /*param mode is default position mode, so keep everything*/ }
             _ => {
                 unreachable!();
             }
@@ -166,8 +154,8 @@ fn execute_one_opcode(opcode_vec: &mut Vec<isize>, state: ComputerState) -> Opti
 
     match opcode {
         1 => {
-            let operand1 = get_operand(opcode_vec, curr_pos+1, param_mode[0]);
-            let operand2 = get_operand(opcode_vec, curr_pos+2, param_mode[1]);
+            let operand1 = get_operand(opcode_vec, curr_pos + 1, param_mode[0]);
+            let operand2 = get_operand(opcode_vec, curr_pos + 2, param_mode[1]);
             /*let add_pos1 = opcode_vec[curr_pos + 1];
             let add_pos2 = opcode_vec[curr_pos + 2];*/
             let res_pos = opcode_vec[curr_pos + 3];
@@ -176,14 +164,15 @@ fn execute_one_opcode(opcode_vec: &mut Vec<isize>, state: ComputerState) -> Opti
             let add_2 = opcode_vec[add_pos2];*/
             opcode_vec[res_pos as usize] = operand1 + operand2;
             //println!("After Add: {:?}", opcode_vec);
-            next_state = Some(ComputerState{
+            ComputerState {
                 pc: curr_pos + 4,
-                reg: None
-            });
+                reg: None,
+                end: false,
+            }
         }
         2 => {
-            let operand1 = get_operand(opcode_vec, curr_pos+1, param_mode[0]);
-            let operand2 = get_operand(opcode_vec, curr_pos+2, param_mode[1]);
+            let operand1 = get_operand(opcode_vec, curr_pos + 1, param_mode[0]);
+            let operand2 = get_operand(opcode_vec, curr_pos + 2, param_mode[1]);
             /*let mul_pos1 = opcode_vec[curr_pos + 1];
             let mul_pos2 = opcode_vec[curr_pos + 2];*/
             let res_pos = opcode_vec[curr_pos + 3];
@@ -192,39 +181,78 @@ fn execute_one_opcode(opcode_vec: &mut Vec<isize>, state: ComputerState) -> Opti
             let mul_2 = opcode_vec[mul_pos2];*/
             opcode_vec[res_pos as usize] = operand1 * operand2;
             //println!("After Mul: {:?}", opcode_vec);
-            next_state = Some(ComputerState{
+            ComputerState {
                 pc: curr_pos + 4,
-                reg: None
-            });
+                reg: None,
+                end: false,
+            }
         }
         3 => {
             //take intermediate register and save to position
             let res_pos = opcode_vec[curr_pos + 1];
             match state.reg {
                 Some(buff_cont) => opcode_vec[res_pos as usize] = buff_cont,
-                None => {println!("{}", curr_pos);unreachable!();}
+                None => {
+                    println!("{}", curr_pos);
+                    unreachable!();
+                }
             }
-            next_state = Some(ComputerState{
+            ComputerState {
                 pc: curr_pos + 2,
-                reg: None
-            });
+                reg: None,
+                end: false,
+            }
         }
         4 => {
             //output signaled position to intermediate register
             let res_pos = opcode_vec[curr_pos + 1];
-            next_state = Some(ComputerState{
+            ComputerState {
                 pc: curr_pos + 2,
-                reg: Some(opcode_vec[res_pos as usize])
-            });
-            println!("{:?}", next_state);
+                reg: Some(opcode_vec[res_pos as usize]),
+                end: false,
+            }
+            //println!("{:?}", next_state);
         }
-        99 => { }
+        // Opcode 5 is jump-if-true: if the first parameter is non-zero,
+        // it sets the instruction pointer to the value from the second parameter.
+        // Otherwise, it does nothing.
+        5 => {
+            println!("Unreachable! Opcode was: {}", 5);
+            unreachable!();
+        }
+        // Opcode 6 is jump-if-false: if the first parameter is zero,
+        // it sets the instruction pointer to the value from the second
+        // parameter. Otherwise, it does nothing.
+        6 => {
+            println!("Unreachable! Opcode was: {}", 6);
+            unreachable!();
+        }
+        // Opcode 7 is less than: if the first parameter is less than the
+        // second parameter, it stores 1 in the position given by the third
+        // parameter. Otherwise, it stores 0.
+        7 => {
+            println!("Unreachable! Opcode was: {}", 7);
+            unreachable!();
+        }
+        // Opcode 8 is equals: if the first parameter is equal to the second
+        // parameter, it stores 1 in the position given by the third parameter.
+        // Otherwise, it stores 0.
+        8 => {
+            println!("Unreachable! Opcode was: {}", 8);
+            unreachable!();
+        }
+        99 => {
+            ComputerState {
+                pc: curr_pos,
+                reg: state.reg, //keep old register state to output it
+                end: true,
+            }
+        }
         a => {
             println!("Unreachable! Opcode was: {}", a);
             unreachable!();
         }
     }
-    return next_state;
 }
 
 fn get_operand(opcode_vec: &mut Vec<isize>, param_pos: usize, param_mode: ParamMode) -> isize
@@ -232,7 +260,7 @@ fn get_operand(opcode_vec: &mut Vec<isize>, param_pos: usize, param_mode: ParamM
     match param_mode {
         ParamMode::PositionMode => {
             opcode_vec[opcode_vec[param_pos] as usize]
-        },
+        }
         ParamMode::IntermediateMode => {
             opcode_vec[param_pos]
         }
