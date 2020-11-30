@@ -40,7 +40,7 @@ fn main() {
         Ok(intcode_str_vec) => {
             match collect_intcode_from_string(intcode_str_vec[0].to_string()) {
                 Ok(mut opcode_vec) => {
-                    let res = execute_intopcode_program(&mut opcode_vec, Some(1));
+                    let res = execute_intopcode_program(&mut opcode_vec, Some(5));
                     println!("Successfully executed the program. Result is: {:?}", res);
                 }
                 Err(text) => println!("Error occured: {}", text),
@@ -217,29 +217,73 @@ fn execute_one_opcode(opcode_vec: &mut Vec<isize>, state: ComputerState) -> Comp
         // it sets the instruction pointer to the value from the second parameter.
         // Otherwise, it does nothing.
         5 => {
-            println!("Unreachable! Opcode was: {}", 5);
-            unreachable!();
+            let operand1 = get_operand(opcode_vec, curr_pos + 1, param_mode[0]);
+            let operand2 = get_operand(opcode_vec, curr_pos + 2, param_mode[1]);
+            let new_pc: usize =
+                match operand1 != 0 {
+                    true => operand2 as usize,
+                    false => curr_pos + 3
+                };
+            ComputerState {
+                pc: new_pc,
+                reg: None,
+                end: false,
+            }
         }
         // Opcode 6 is jump-if-false: if the first parameter is zero,
         // it sets the instruction pointer to the value from the second
         // parameter. Otherwise, it does nothing.
         6 => {
-            println!("Unreachable! Opcode was: {}", 6);
-            unreachable!();
+            let operand1 = get_operand(opcode_vec, curr_pos + 1, param_mode[0]);
+            let operand2 = get_operand(opcode_vec, curr_pos + 2, param_mode[1]);
+            let new_pc: usize =
+                match operand1 == 0 {
+                    true => operand2 as usize,
+                    false => curr_pos + 3
+                };
+            ComputerState {
+                pc: new_pc,
+                reg: None,
+                end: false,
+            }
         }
         // Opcode 7 is less than: if the first parameter is less than the
         // second parameter, it stores 1 in the position given by the third
         // parameter. Otherwise, it stores 0.
         7 => {
-            println!("Unreachable! Opcode was: {}", 7);
-            unreachable!();
+            let operand1 = get_operand(opcode_vec, curr_pos + 1, param_mode[0]);
+            let operand2 = get_operand(opcode_vec, curr_pos + 2, param_mode[1]);
+
+            let res_pos = opcode_vec[curr_pos + 3];
+            opcode_vec[res_pos as usize] =
+                match operand1 < operand2 {
+                    true =>  1,
+                    false => 0,
+                };
+            ComputerState {
+                pc: curr_pos + 4,
+                reg: None,
+                end: false,
+            }
         }
         // Opcode 8 is equals: if the first parameter is equal to the second
         // parameter, it stores 1 in the position given by the third parameter.
         // Otherwise, it stores 0.
         8 => {
-            println!("Unreachable! Opcode was: {}", 8);
-            unreachable!();
+            let operand1 = get_operand(opcode_vec, curr_pos + 1, param_mode[0]);
+            let operand2 = get_operand(opcode_vec, curr_pos + 2, param_mode[1]);
+
+            let res_pos = opcode_vec[curr_pos + 3];
+            opcode_vec[res_pos as usize] =
+                match operand1 == operand2 {
+                    true =>  1,
+                    false => 0,
+                };
+            ComputerState {
+                pc: curr_pos + 4,
+                reg: None,
+                end: false,
+            }
         }
         99 => {
             ComputerState {
@@ -249,7 +293,8 @@ fn execute_one_opcode(opcode_vec: &mut Vec<isize>, state: ComputerState) -> Comp
             }
         }
         a => {
-            println!("Unreachable! Opcode was: {}", a);
+            println!("Unreachable! Opcode was: {}, pos: {}, opcodevec: {:?}",
+                     a, curr_pos, opcode_vec);
             unreachable!();
         }
     }
