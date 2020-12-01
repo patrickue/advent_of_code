@@ -26,7 +26,7 @@ mod tests {
         //This is assert does not really matter.
         // If the program above does not work correctly, it might reach an
         // "unreachable" state. So it this test executes at all, it is OK.
-        assert_eq!(None, execute_intopcode_program(&mut int_code_vec, Some(1)));
+        assert_eq!(Some(1), execute_intopcode_program(&mut int_code_vec, Some(1)));
         assert_eq!(1002, int_code_vec[0]);
     }
 
@@ -222,6 +222,7 @@ mod tests {
     /// the input value is equal to 8, or output 1001 if the input value is greater than 8.
     #[test]
     fn long_example_case1_lowerthan8 () {
+        println!("Running LONG_EXAMPLE_CASE1_LOWERTHAN8");
         let long_example = LONG_EXAMPLE.to_string();
         let input = Some(7);
         let int_code_vec = collect_intcode_from_string(long_example.to_string());
@@ -231,6 +232,7 @@ mod tests {
 
     #[test]
     fn long_example_case1_equalto8 () {
+        println!("Running LONG_EXAMPLE_CASE1_EQUALTO8");
         let long_example = LONG_EXAMPLE.to_string();
         let input = Some(8);
         let int_code_vec = collect_intcode_from_string(long_example.to_string());
@@ -240,8 +242,9 @@ mod tests {
 
     #[test]
     fn long_example_case1_largerthan8 () {
+        println!("Running LONG_EXAMPLE_CASE1_LARGERTHAN8");
         let long_example = LONG_EXAMPLE.to_string();
-        let input = Some(8);
+        let input = Some(9);
         let int_code_vec = collect_intcode_from_string(long_example.to_string());
         //This is assert does not really matter, like previous test.
         assert_eq!(Some(1001), execute_intopcode_program(&mut int_code_vec.unwrap(), input));

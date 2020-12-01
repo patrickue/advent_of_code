@@ -126,7 +126,8 @@ fn collect_intcode_from_string(inputstring: String) -> Result<Vec<isize>, Box<dy
 ///
 fn execute_one_opcode(opcode_vec: &mut Vec<isize>, state: ComputerState) -> ComputerState {
     //Decode command:
-    //println!("Before:    {:?}", opcode_vec);
+    println!("Before: {:?}", opcode_vec);
+    println!("State: {:?}", state);
     let curr_pos: usize = state.pc;
 
 
@@ -166,7 +167,7 @@ fn execute_one_opcode(opcode_vec: &mut Vec<isize>, state: ComputerState) -> Comp
             //println!("After Add: {:?}", opcode_vec);
             ComputerState {
                 pc: curr_pos + 4,
-                reg: None,
+                reg: state.reg,
                 end: false,
             }
         }
@@ -183,7 +184,7 @@ fn execute_one_opcode(opcode_vec: &mut Vec<isize>, state: ComputerState) -> Comp
             //println!("After Mul: {:?}", opcode_vec);
             ComputerState {
                 pc: curr_pos + 4,
-                reg: None,
+                reg: state.reg,
                 end: false,
             }
         }
@@ -199,16 +200,17 @@ fn execute_one_opcode(opcode_vec: &mut Vec<isize>, state: ComputerState) -> Comp
             }
             ComputerState {
                 pc: curr_pos + 2,
-                reg: None,
+                reg: state.reg,
                 end: false,
             }
         }
         4 => {
             //output signaled position to intermediate register
             let res_pos = opcode_vec[curr_pos + 1];
+            let output = get_operand(opcode_vec, curr_pos +1 , param_mode[0]);
             ComputerState {
                 pc: curr_pos + 2,
-                reg: Some(opcode_vec[res_pos as usize]),
+                reg: Some(output),
                 end: false,
             }
             //println!("{:?}", next_state);
@@ -226,7 +228,7 @@ fn execute_one_opcode(opcode_vec: &mut Vec<isize>, state: ComputerState) -> Comp
                 };
             ComputerState {
                 pc: new_pc,
-                reg: None,
+                reg: state.reg,
                 end: false,
             }
         }
@@ -243,7 +245,7 @@ fn execute_one_opcode(opcode_vec: &mut Vec<isize>, state: ComputerState) -> Comp
                 };
             ComputerState {
                 pc: new_pc,
-                reg: None,
+                reg: state.reg,
                 end: false,
             }
         }
@@ -262,7 +264,7 @@ fn execute_one_opcode(opcode_vec: &mut Vec<isize>, state: ComputerState) -> Comp
                 };
             ComputerState {
                 pc: curr_pos + 4,
-                reg: None,
+                reg: state.reg,
                 end: false,
             }
         }
@@ -281,7 +283,7 @@ fn execute_one_opcode(opcode_vec: &mut Vec<isize>, state: ComputerState) -> Comp
                 };
             ComputerState {
                 pc: curr_pos + 4,
-                reg: None,
+                reg: state.reg,
                 end: false,
             }
         }
