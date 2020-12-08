@@ -10,6 +10,12 @@ enum ArgsError {
     NotUtf8(OsString),
 }
 
+#[derive(Debug)]
+struct ObjectInSpace{
+    id: String,
+    orbits: String,
+}
+
 fn main() {
     let filename = match get_args() {
         Ok(a) => a,
@@ -19,9 +25,56 @@ fn main() {
         }
     };
     println!("Args: {:?}", filename);
+    let mut ois_vec: Vec<ObjectInSpace> = vec![];
     match collect_usize_vec_from_file(filename) {
         Ok(orbit_vec) => {
-            println!("Successful: {:?}", orbit_vec)
+            println!("Successful: {:?}", orbit_vec);
+            for (id1, id2) in orbit_vec {
+
+                ois_vec.push(ObjectInSpace{
+                    id: String::from(id2),
+                    orbits: String::from(id1),
+                });
+            }
+            //Check if all orbits exist:
+            for ois_1 in &ois_vec {
+                let mut link_exists: bool = false;
+                for ois_2 in &ois_vec {
+                    if ois_1.orbits == ois_2.id {
+                        //println!("Matching id! {}", o.id);
+                        link_exists = true;
+                    }
+                    else if ois_1.orbits == "COM" {
+                        link_exists = true;
+                    }
+                }
+                if !link_exists {
+                    println!("For object {:?} a orbit {} does not exist", ois_1, ois_1.orbits);
+                    unreachable!();
+                }
+            }
+            // Count all orbits
+            let mut orbit_count = 0;
+            for ois in &ois_vec {
+                println!("CurrOIS: {:?}", ois);
+                orbit_count += 1;
+                let mut curr_ois = ois;
+                let mut local_orbits = 1;
+                while curr_ois.orbits != "COM" {
+                   for super_ois in &ois_vec {
+                       if super_ois.id == curr_ois.orbits {
+                           // found the object we're orbiting
+                           curr_ois = super_ois;
+                           orbit_count += 1;
+                           local_orbits += 1;
+                           break;
+                       }
+                   }
+                }
+                println!("After OIS: {:?}, orbit Nr: {}", curr_ois, local_orbits);
+            }
+            println!("Orbit count {}", orbit_count);
+            println!("All ObjectsInSpace {:?}", ois_vec);
         }
         Err(text) => println!("Error occured: {}", text),
     }
@@ -50,7 +103,7 @@ fn get_args() -> Result<String, ArgsError> {
         .map_err(|oss| ArgsError::NotUtf8(oss))
 }
 
-fn collect_usize_vec_from_file(inputname: String) -> Result<Vec<String>, Box<dyn error::Error>> {
+fn collect_usize_vec_from_file(inputname: String) -> Result<Vec<(String, String)>, Box<dyn error::Error>> {
     use std::fs::File;
     use std::io::{BufRead, BufReader};
 
@@ -63,8 +116,12 @@ fn collect_usize_vec_from_file(inputname: String) -> Result<Vec<String>, Box<dyn
     // We only expect one line:
     //Ok(lines_iter.collect::<Vec<String>>())
     Ok(buf.lines()
-        .map(|p| p.unwrap())
-        .collect::<Vec<String>>())
+        .map(|p| {
+            let res = p.unwrap();
+            let x: Vec<&str> = res.split(')').collect();
+            (x[0].to_string().clone(), x[1].to_string())
+        })
+        .collect::<Vec<(String, String)>>())
         //Map a possible ParseIntError onto Box Error
         //.map_err(|e| e.into())
 }
