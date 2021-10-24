@@ -35,6 +35,7 @@ enum ArgsError {
 }
 
 #[derive(Debug)]
+#[derive(Copy, Clone)]
 enum Operation {
     Jmp,
     Acc,
@@ -42,6 +43,7 @@ enum Operation {
 }
 
 #[derive(Debug)]
+#[derive(Copy, Clone)]
 struct Instruction {
     op: Operation,
     arg: isize,
@@ -63,8 +65,8 @@ fn main() {
                 .map(|l| parse_instruction(l))
                 .collect::<Vec<Instruction>>();
             println!("Parsed instructions {:?}", instructions);
-            let loop_acc = detect_loop(instructions);
-            println!("Accumulator was {:?} at Loop.", loop_acc);
+            let loop_acc = try_replace_any_jmp_or_nop(instructions);
+            println!("Try replace any jmp or nop returned {:?}.", loop_acc);
         }
         Err(text) => println!("Error occured: {}", text),
     }
@@ -123,13 +125,33 @@ fn parse_operation(op_str: &str) -> Operation {
     };
 }
 
-fn detect_loop(instructions: Vec<Instruction>) -> isize {
+fn try_replace_any_jmp_or_nop(mut instructions: Vec<Instruction>) -> Option<isize> {
+    for i in 0..instructions.len() {
+        let mut instructions_copy = instructions.clone();
+        match instructions[i].op.clone() {
+            Operation::Jmp => {
+                instructions_copy[i] = Instruction{op: Operation::Nop, arg: instructions[i].arg};
+            },
+            Operation::Nop => {
+                instructions_copy[i] = Instruction{op: Operation::Jmp, arg: instructions[i].arg};
+            },
+            _ => {}
+        }
+        match detect_loop(instructions_copy) {
+            Some(x) => {return Some(x);},
+            None => {}
+        }
+    }
+    return None;
+}
+
+fn detect_loop(instructions: Vec<Instruction>) -> Option<isize> {
     let mut acc_value: isize = 0;
     let mut pc: usize = 0;
     let mut visited_vec: Vec<bool> = vec![false; instructions.len()];
-    loop {
+    while pc < visited_vec.len() {
         if visited_vec[pc] {
-            return acc_value;
+            return None;
         }
 
         visited_vec[pc] = true;
@@ -148,4 +170,5 @@ fn detect_loop(instructions: Vec<Instruction>) -> isize {
             }
         }
     }
+    Some(acc_value)
 }
