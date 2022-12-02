@@ -1,3 +1,5 @@
 **/target
 **/.idea
 **/*.rs.bk
+__pycache__
+.mypy_cache
