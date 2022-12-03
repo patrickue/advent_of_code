@@ -3,3 +3,4 @@
 **/*.rs.bk
 __pycache__
 .mypy_cache
+venv
