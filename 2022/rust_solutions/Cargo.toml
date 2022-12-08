@@ -1,5 +1,5 @@
 [package]
-name = "aoc07_no_space_left_on_device"
+name = "rust_solutions"
 version = "0.1.0"
 edition = "2021"
 
