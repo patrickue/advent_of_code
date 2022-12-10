@@ -2,8 +2,8 @@ use std::env;
 use std::error;
 use std::ffi::OsString;
 
-mod forest_08;
-mod planks_09;
+//mod forest_08;
+//mod planks_09;
 mod cathode_ray_tube_10;
 
 // Error type for what can go wrong on parsing arguments for this cmd
@@ -36,7 +36,7 @@ fn main/*_10_cathode_ray_tube*/() {
     }
 }
 
-fn main_09_bridge() {
+/*fn main_09_bridge() {
     let filename = match get_args() {
         Ok(a) => a,
         Err(text) => {
@@ -77,7 +77,7 @@ fn main_08_forest() {
         }
         Err(text) => println!("Error occured: {}", text),
     }
-}
+}*/
 
 fn get_args() -> Result<String, ArgsError> {
     // Prints each argument on a separate line

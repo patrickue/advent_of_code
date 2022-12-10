@@ -55,31 +55,61 @@ pub(crate) fn parse_commands(lines: Vec<String>) -> Result<Vec<ProgramLine>, Box
 pub(crate) fn get_signal_strengths_sum(program_lines: Vec<ProgramLine>) -> isize {
     let mut register_state_during_cycle: Vec<isize> = Vec::new();
     let interesting_cycles = vec![20, 60, 100, 140, 180, 220];
-    let mut cycle_idx = 0;
-    let mut x = 0;
+    //let mut cycle_idx = 0;
+    let mut x = 1;
     // initialization
     register_state_during_cycle.push(x);
     for program_line in program_lines.iter() {
         match program_line.inst {
             Instruction::Noop => {
                 register_state_during_cycle.push(x);
-                cycle_idx += 1;
+                //cycle_idx += 1;
             }
             Instruction::Addx => {
                 register_state_during_cycle.push(x);
                 register_state_during_cycle.push(x);
-                cycle_idx += 2;
+                //cycle_idx += 2;
                 x += program_line.param.unwrap();
             }
         }
     }
-    let mut outputs = register_state_during_cycle
-        .iter()
-        .enumerate()
-        .collect::<Vec<(usize, &isize)>>();
-    for output in outputs {
-        let (cycle, x) = output;
-        println!("Cycle {:?}, X: {:?}", cycle, x)
+    // let mut outputs = register_state_during_cycle
+    //     .iter()
+    //     .enumerate()
+    //     .collect::<Vec<(usize, &isize)>>();
+    // for output in outputs {
+    //     let (cycle, x) = output;
+    //     println!("Cycle {:?}, X: {:?}", cycle, x)
+    // }
+    // let outputs2 = register_state_during_cycle.iter()
+    //     .enumerate()
+    //     .filter(|(index, _)| interesting_cycles.contains(index))
+    //     .map(|(idx, &elem)|
+    //         format!("Idx: {:?} X: {:?} Signal:{:?}", idx, elem, idx as isize * elem))
+    //     .collect::<Vec<String>>();
+    //
+    // for output in outputs2 {
+    //     println!("{}", output);
+    // }
+
+    // let mut ctr = vec![false; 240];
+    for line_offset in (0..240).step_by(40)
+    {
+        for pixel_pos in 0..40
+        {
+            let cycle = line_offset + pixel_pos + 1;
+
+            let sprite_begin = register_state_during_cycle[cycle] - 1;
+            let sprite_end = register_state_during_cycle[cycle] + 1;
+
+            let pixel = (sprite_begin..=sprite_end)
+                .contains(&(pixel_pos as isize));
+            match pixel {
+                true => print!("#"),
+                false => print!("."),
+            }
+        }
+        print!("\n");
     }
     return register_state_during_cycle.iter()
         .enumerate()
