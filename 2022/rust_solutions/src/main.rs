@@ -4,6 +4,7 @@ use std::ffi::OsString;
 
 mod forest_08;
 mod planks_09;
+mod cathode_ray_tube_10;
 
 // Error type for what can go wrong on parsing arguments for this cmd
 #[derive(Debug)]
@@ -13,7 +14,29 @@ enum ArgsError {
     NotUtf8(OsString),
 }
 
-fn main() {
+
+fn main/*_10_cathode_ray_tube*/() {
+    let filename = match get_args() {
+        Ok(a) => a,
+        Err(text) => {
+            println!("{:?} Usage: rust_solutions <input.txt>", text);
+            std::process::exit(1);
+        }
+    };
+    println!("Args: {:?}", filename);
+    match collect_str_vec_from_file(filename) {
+        Ok(instruction_strings) => {
+            println!("Successful: {:?}", instruction_strings);
+            let instructions = cathode_ray_tube_10::parse_commands(instruction_strings).unwrap();
+            println!("Parsed instructions {:?}", instructions);
+            let count: isize = cathode_ray_tube_10::get_signal_strengths_sum(instructions);
+            println!("Signal strengths sum is {:?}.", count);
+        }
+        Err(text) => println!("Error occured: {}", text),
+    }
+}
+
+fn main_09_bridge() {
     let filename = match get_args() {
         Ok(a) => a,
         Err(text) => {
@@ -27,15 +50,15 @@ fn main() {
             println!("Successful: {:?}", movement_vector);
             let movements = planks_09::parse_movements(movement_vector).unwrap();
             println!("Parsed movements {:?}", movements);
-            let count: usize = planks_09::simulate_the_rope_return_tail_positions(movements);
-            println!("Best Tree has {:?} scenic score.", count);
+            let count: usize = planks_09::simulate_the_rope_return_tail_positions_part2(movements);
+            println!("Tail moves over  {:?} fields.", count);
         }
         Err(text) => println!("Error occured: {}", text),
     }
 }
 
 
-fn main_09_forest() {
+fn main_08_forest() {
     let filename = match get_args() {
         Ok(a) => a,
         Err(text) => {

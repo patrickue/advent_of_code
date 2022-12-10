@@ -80,14 +80,14 @@ impl Movement {
     }
 }
 
-pub fn simulate_the_rope_return_tail_positions(movements: Vec<Movement>) -> usize
+pub fn simulate_the_rope_return_tail_positions_part1(movements: Vec<Movement>) -> usize
 {
     let mut head = Point { x: 0, y: 0 };
     let mut tail = Point { x: 0, y: 0 };
     let mut tail_touched_positions: HashSet<Point> = vec![tail].into_iter().collect();
 
     for movement in movements.into_iter() {
-        for steps in 0..movement.steps {
+        for _ in 0..movement.steps {
             head.move_me(&movement.direction);
             if !tail.touching(&head) {
                 tail.follow(&head);
@@ -98,6 +98,26 @@ pub fn simulate_the_rope_return_tail_positions(movements: Vec<Movement>) -> usiz
     return tail_touched_positions.len();
 }
 
+pub fn simulate_the_rope_return_tail_positions_part2(movements: Vec<Movement>) -> usize
+{
+    let mut rope = [Point { x: 0, y: 0 }; 10];
+    let mut tail_touched_positions: HashSet<Point> = vec![rope[9]].into_iter().collect();
+
+    for movement in movements.into_iter() {
+        for _ in 0..movement.steps {
+            rope[0].move_me(&movement.direction);
+            for x in 0..9
+            {
+                if !rope[x + 1].touching(&rope[x]) {
+                    let to_be_followed = rope[x].clone();
+                    &rope[x + 1].follow(&to_be_followed);
+                }
+            }
+            tail_touched_positions.insert(rope[9]);
+        }
+    }
+    return tail_touched_positions.len();
+}
 
 pub(crate) fn parse_movements(lines: Vec<String>) -> Result<Vec<Movement>, Box<dyn error::Error>> {
     lines.iter().map(|line| line.split(" ").collect())
