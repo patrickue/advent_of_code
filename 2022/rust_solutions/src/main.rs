@@ -1,10 +1,12 @@
 use std::env;
 use std::error;
 use std::ffi::OsString;
+use crate::distress_signal_13::is_pair_in_right_order;
 
 //mod forest_08;
 //mod planks_09;
 mod cathode_ray_tube_10;
+mod distress_signal_13;
 
 // Error type for what can go wrong on parsing arguments for this cmd
 #[derive(Debug)]
@@ -15,7 +17,33 @@ enum ArgsError {
 }
 
 
-fn main/*_10_cathode_ray_tube*/() {
+fn main() {
+    let filename = match get_args() {
+        Ok(a) => a,
+        Err(text) => {
+            println!("{:?} Usage: rust_solutions <input.txt>", text);
+            std::process::exit(1);
+        }
+    };
+    println!("Args: {:?}", filename);
+    match collect_str_vec_from_file(filename) {
+        Ok(instruction_strings) => {
+            println!("Successful: {:?}", instruction_strings);
+            let distress_pairs = distress_signal_13::split_into_pairs(instruction_strings).unwrap();
+            println!("Pairs!: {:?}", distress_pairs);
+            for pair in distress_pairs {
+                match is_pair_in_right_order(pair.pair.left, pair.pair.right) {
+                    Some(true) => println!("Pair {} is NOT in order", pair.idx),
+                    Some(false) => println!("Pair {} is in order", pair.idx),
+                    None => println!("Fuck"),
+                }
+            }
+        }
+        Err(text) => println!("Error occured: {}", text),
+    }
+}
+
+fn main10_cathode_ray_tube() {
     let filename = match get_args() {
         Ok(a) => a,
         Err(text) => {

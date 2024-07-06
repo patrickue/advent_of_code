@@ -13,7 +13,8 @@ def parse_input(file, name) -> (int, int):
         if extracted_filesize is not None:
             size += int(extracted_filesize.group(1))
         elif line.startswith("$ cd .."):
-            pprint(f"Closed folder {name}:{size}")
+            if size >= 8_729_145:
+                pprint(f"Closed folder {name}:{size}")
             return small_folder_size, size
         elif line.startswith("$ cd"):
             (subsmall_folder_size, subfolder_size) = parse_input(file, name+'/'+line.strip()[5:])
